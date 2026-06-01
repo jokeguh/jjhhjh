@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.housework.scoreboard" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>家务积分表</name>
+    <description>杨煜瑾 &amp; 杨舒涵 家务积分管理系统</description>
+    <author email="parent@family.local" href="https://family.local">家长</author>
+    <content src="index.html" />
+
+    <!-- 允许访问本地文件 -->
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-navigation href="*" />
+
+    <!-- 平台配置 -->
+    <platform name="android">
+        <!-- 图标 -->
+        <icon density="mdpi" src="res/icon/icon-48.png" />
+        <icon density="hdpi" src="res/icon/icon-72.png" />
+        <icon density="xhdpi" src="res/icon/icon-96.png" />
+        <icon density="xxhdpi" src="res/icon/icon-144.png" />
+        <icon density="xxxhdpi" src="res/icon/icon-192.png" />
+
+        <!-- 自适应图标（Android 8+） -->
+        <icon density="mdpi" src="res/icon/icon-foreground-48.png" />
+        <icon density="hdpi" src="res/icon/icon-foreground-72.png" />
+        <icon density="xhdpi" src="res/icon/icon-foreground-96.png" />
+        <icon density="xxhdpi" src="res/icon/icon-foreground-144.png" />
+        <icon density="xxxhdpi" src="res/icon/icon-foreground-192.png" />
+
+        <!-- 启动画面（可选，WebView 应用通常不需要） -->
+        <preference name="SplashScreenDelay" value="0" />
+        <preference name="FadeSplashScreen" value="false" />
+
+        <!-- 允许本地存储 -->
+        <preference name="AndroidInsecureFileModeEnabled" value="true" />
+    </platform>
+
+    <!-- 通用配置 -->
+    <preference name="Orientation" value="portrait" />
+    <preference name="Fullscreen" value="false" />
+    <preference name="StatusBarOverlaysWebView" value="false" />
+    <preference name="StatusBarBackgroundColor" value="#f59e0b" />
+    <preference name="StatusBarStyle" value="lightcontent" />
+    <preference name="loadUrlTimeoutValue" value="60000" />
+
+    <!-- 允许 localStorage -->
+    <preference name="AndroidPersistentFileLocation" value="Internal" />
+    <preference name="domstorage" value="true" />
+
+    <!-- 插件：无需额外插件，纯 WebView 即可运行 -->
+
+    <!-- Android 最小/目标 SDK -->
+    <preference name="android-minSdkVersion" value="22" />
+    <preference name="android-targetSdkVersion" value="34" />
+</widget>
