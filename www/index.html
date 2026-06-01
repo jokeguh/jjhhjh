@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#f59e0b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="家务积分表">
+    <link rel="manifest" href="manifest.json">
+    <title>家务积分表 · 杨煜瑾 & 杨舒涵</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background: #f1f5f9; font-family: system-ui, 'Segoe UI', 'Helvetica Neue', sans-serif; padding: 20px 12px 40px; color: #0f172a; }
+        .app-container { max-width: 550px; margin: 0 auto; background: white; border-radius: 48px 32px 48px 32px; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15); overflow: hidden; }
+        .hero { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 20px 20px 16px; color: white; }
+        .hero-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .hero h1 { font-size: 1.6rem; font-weight: 800; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .hero h1 small { font-size: 0.75rem; background: rgba(255,255,240,0.25); padding: 4px 12px; border-radius: 40px; }
+
+        /* ── 孩子选择器 ── */
+        .child-selector { display: flex; gap: 8px; margin-bottom: 12px; }
+        .child-btn { flex: 1; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 10px 16px; border-radius: 40px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.25s; backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .child-btn.active { background: white; color: #f59e0b; border-color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: scale(1.03); }
+        .child-btn .child-emoji { font-size: 1.4rem; }
+        .child-btn .child-points-mini { font-size: 0.7rem; opacity: 0.8; font-weight: 600; }
+
+        .global-points { background: rgba(0,0,0,0.25); backdrop-filter: blur(4px); padding: 6px 16px; border-radius: 60px; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .week-selector { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,240,0.2); backdrop-filter: blur(8px); border-radius: 60px; padding: 6px 12px; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+        .week-nav-buttons { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .week-arrow { background: rgba(0,0,0,0.2); border: none; color: white; font-size: 1.2rem; width: 32px; height: 32px; border-radius: 40px; cursor: pointer; }
+        .current-week { font-weight: 700; font-size: 0.9rem; background: #f59e0b; padding: 4px 12px; border-radius: 40px; }
+        .new-week-btn, .set-date-btn, .edit-chores-btn, .manage-pool-btn { background: white; color: #f59e0b; border: none; padding: 5px 12px; border-radius: 40px; font-weight: 600; font-size: 0.7rem; cursor: pointer; }
+        .date-range { font-size: 0.65rem; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 30px; }
+        .tabs-nav { display: flex; background: #ffffff; border-bottom: 2px solid #f1f1ef; padding: 0 12px; gap: 8px; }
+        .tab-btn { flex: 1; text-align: center; padding: 14px 0; font-weight: 700; font-size: 0.95rem; background: transparent; border: none; color: #64748b; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; touch-action: manipulation; }
+        .tab-btn.active { color: #f59e0b; border-bottom-color: #f59e0b; background: #fffbeb; }
+        .tab-pane { display: none; animation: fade 0.2s ease; }
+        .tab-pane.active-pane { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: translateY(0);} }
+
+        .lottery-tiers { display: flex; gap: 10px; margin: 20px 16px 12px; flex-wrap: nowrap; overflow-x: auto; }
+        .lottery-card { flex: 1 1 0px; background: linear-gradient(145deg, #fff5e6, #ffecd9); border-radius: 28px; padding: 12px 4px; text-align: center; border: 1px solid #ffd9b5; }
+        .lottery-card:active { transform: scale(0.97); }
+        .lottery-cost { font-size: 1.2rem; font-weight: 800; background: #f97316; display: inline-block; padding: 4px 10px; border-radius: 60px; color: white; margin-bottom: 8px; white-space: nowrap; }
+        .lottery-desc { font-size: 0.65rem; color: #b45309; margin: 6px 0; }
+        .lottery-btn-tier { background: #f97316; border: none; padding: 6px 8px; border-radius: 40px; color: white; font-weight: 700; font-size: 0.75rem; cursor: pointer; margin-top: 6px; width: 90%; touch-action: manipulation; }
+        .wheel-section { background: radial-gradient(ellipse at 50% 30%, #fff8f0, #ffe4cc); margin: 0 16px 16px; border-radius: 44px; padding: 16px; border: 1px solid #ffd9b5; }
+        .wheel-container { position: relative; width: 320px; height: 320px; margin: 10px auto; overflow: visible; }
+        .wheel-container::before { content: ""; position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px; border-radius: 50%; background: radial-gradient(circle, rgba(251,191,36,0.15) 60%, transparent 75%); z-index: 0; pointer-events: none; animation: wheelGlow 2s ease-in-out infinite; }
+        @keyframes wheelGlow { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 1; }
+        .pointer { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 6px 8px rgba(180,80,0,0.4)); }
+        .pointer-body { width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-top: 50px solid #FF6B35; margin: 0 auto; position: relative; }
+        .pointer-body::after { content: ""; position: absolute; top: -50px; left: -8px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 22px solid #FFD700; }
+        .pointer-dot { width: 18px; height: 18px; background: radial-gradient(circle, #FFD700, #FF6B35); border-radius: 50%; margin: -4px auto 0; box-shadow: 0 0 12px rgba(255,180,0,0.7); }
+        @keyframes pointerBounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(4px); } }
+        .pointer.bouncing { animation: pointerBounce 0.3s ease-out 3; }
+        .current-tier-label { text-align: center; font-size: 0.9rem; font-weight: 700; color: #b45309; margin-top: 12px; background: #fff0d6; padding: 6px; border-radius: 40px; }
+        .prize-preview { font-size: 0.85rem; background: rgba(255,255,220,0.9); padding: 10px; border-radius: 32px; margin-top: 12px; text-align: center; font-weight: 600; }
+        .pool-items-list { background: rgba(255,245,225,0.8); border-radius: 28px; padding: 8px 12px; margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .pool-badge { background: white; padding: 4px 10px; border-radius: 40px; color: #92400e; font-weight: 500; font-size: 0.7rem; }
+
+        .week-nav { display: flex; overflow-x: auto; gap: 8px; padding: 16px 16px 8px; background: white; }
+        .week-day { flex: 0 0 auto; background: #f8fafc; padding: 8px 14px; border-radius: 60px; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: 1px solid #e2e8f0; text-align: center; min-width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .week-day.active { background: #f59e0b; border-color: #f59e0b; color: white; }
+        .daily-summary { background: #fff7ed; margin: 12px 16px; padding: 12px 20px; border-radius: 32px; display: flex; justify-content: space-between; border-left: 6px solid #f59e0b; font-weight: 600; }
+        .chore-list { padding: 0 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .chore-item { background: white; border-radius: 28px; border: 1px solid #f1f1f5; padding: 12px 14px; }
+        .chore-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+        .chore-info { display: flex; align-items: center; gap: 12px; flex: 2; min-width: 130px; }
+        .chore-icon { background: #fef3c7; width: 44px; height: 44px; border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+        .chore-name { font-weight: 700; font-size: 1rem; }
+        .chore-stats { display: flex; gap: 16px; font-size: 0.75rem; color: #475569; background: #f8fafc; padding: 6px 12px; border-radius: 30px; margin-top: 6px; flex-wrap: wrap; }
+        .stat-item { display: flex; align-items: center; gap: 4px; }
+        .action-buttons { display: flex; gap: 10px; }
+        .btn-chore { border: none; background: #f1f5f9; padding: 6px 14px; border-radius: 36px; font-weight: 600; font-size: 0.75rem; cursor: pointer; touch-action: manipulation; }
+        .btn-complete { background: #dcfce7; color: #15803d; }
+        .btn-fail { background: #fee2e2; color: #b91c1c; }
+        .btn-complete:active, .btn-fail:active { transform: scale(0.96); }
+        .action-footer { display: flex; gap: 12px; padding: 8px 20px 28px; }
+        .btn-secondary { flex: 1; background: #f1f5f9; border: none; padding: 12px 0; border-radius: 48px; font-weight: 600; cursor: pointer; touch-action: manipulation; }
+
+        .backpack-section, .exchange-section { margin: 16px 16px 12px; border-radius: 36px; padding: 14px 16px; }
+        .backpack-section { background: #ecfdf5; border: 1px solid #a7f3d0; }
+        .exchange-section { background: #fefce8; border: 1px solid #fde68a; margin-bottom: 20px; }
+        .backpack-header, .exchange-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; margin-bottom: 12px; }
+        .backpack-title { font-weight: 800; color: #047857; font-size: 1rem; }
+        .backpack-stats { font-size: 0.7rem; background: #d1fae5; padding: 4px 10px; border-radius: 30px; }
+        .avail-points { background: #f59e0b; padding: 4px 14px; border-radius: 40px; color: white; font-weight: 700; font-size: 0.9rem; }
+        .reward-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+        .reward-item { background: white; border-radius: 28px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border: 1px solid #a7f3d0; }
+        .use-btn { background: #10b981; border: none; padding: 6px 14px; border-radius: 40px; color: white; font-weight: 600; font-size: 0.7rem; cursor: pointer; touch-action: manipulation; }
+        .reward-grid { display: flex; flex-direction: column; gap: 10px; }
+        .reward-card { background: white; border-radius: 28px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border: 1px solid #fed7aa; }
+        .exchange-btn { background: #f59e0b; border: none; padding: 6px 14px; border-radius: 40px; color: white; font-weight: 600; font-size: 0.7rem; cursor: pointer; touch-action: manipulation; }
+        .exchange-btn.disabled { background: #d1d5db; pointer-events: none; opacity: 0.6; }
+        .rule-tip { font-size: 0.65rem; color: #92400e; margin-top: 12px; text-align: center; border-top: 1px dashed #fed7aa; padding-top: 8px; }
+        .empty-backpack { text-align: center; color: #6b7280; font-size: 0.75rem; padding: 12px; }
+
+        .modal-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(5px); }
+        .modal-card { background: white; border-radius: 48px; width: 90%; max-width: 400px; padding: 24px; text-align: center; max-height: 85vh; overflow-y: auto; }
+        .modal-card h3 { margin-bottom: 8px; }
+        .verify-input { margin: 16px 0; padding: 10px; border-radius: 40px; border: 1px solid #e2e8f0; width: 80%; font-size: 1rem; text-align: center; }
+        .verify-btn, .modal-btn { background: #f59e0b; border: none; padding: 8px 20px; border-radius: 40px; color: white; font-weight: bold; margin-top: 8px; cursor: pointer; touch-action: manipulation; }
+        .modal-btn-cancel { background: #9ca3af !important; }
+        .pw-input-group { margin: 12px 0; }
+
+        /* 编辑行 */
+        .chore-edit-row, .pool-edit-row { display: flex; align-items: center; gap: 6px; padding: 6px 4px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; }
+        .chore-edit-row input, .pool-edit-row input, .pool-edit-row select { padding: 6px 8px; border-radius: 20px; border: 1px solid #e2e8f0; font-size: 0.8rem; flex: 1; min-width: 60px; }
+        .chore-edit-row button, .pool-edit-row button { background: #fee2e2; color: #b91c1c; border: none; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.75rem; touch-action: manipulation; }
+
+        @media (max-width: 480px) {
+            .wheel-container { width: 280px; height: 280px; }
+            .pointer { top: -20px; }
+            .pointer-body { border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 38px solid #FF6B35; }
+            .pointer-body::after { top: -38px; left: -6px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 16px solid #FFD700; }
+            .pointer-dot { width: 14px; height: 14px; }
+            .child-btn { font-size: 0.85rem; padding: 8px 12px; }
+            .child-btn .child-emoji { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="hero">
+        <div class="hero-top">
+            <h1 id="heroTitle">杨煜瑾 <small>家务积分表</small></h1>
+            <div class="global-points" id="globalPointsDisplay">🏆 0分</div>
+        </div>
+
+        <!-- ══════ 孩子选择器 ══════ -->
+        <div class="child-selector" id="childSelector"></div>
+
+        <div class="week-selector">
+            <div class="week-nav-buttons">
+                <button class="week-arrow" id="prevWeekBtn">◀</button>
+                <span class="current-week" id="currentWeekLabel">第1周</span>
+                <button class="week-arrow" id="nextWeekBtn">▶</button>
+                <button class="new-week-btn" id="newWeekBtn">+ 新一周</button>
+                <button class="edit-chores-btn" id="editChoresBtn">✏️ 自定义家务</button>
+                <button class="manage-pool-btn" id="managePoolBtn">🎛️ 管理奖池</button>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button class="set-date-btn" id="setWeekDateBtn">📅 设置本周起始</button>
+                <span class="date-range" id="weekDateRange"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="chores">🧹 家务记录</button>
+        <button class="tab-btn" data-tab="lottery">🎡 抽奖转盘</button>
+        <button class="tab-btn" data-tab="rewards">🎁 我的奖励</button>
+    </div>
+
+    <div class="tab-pane active-pane" id="tab-chores">
+        <div class="week-nav" id="weekNav"></div>
+        <div class="daily-summary"><span id="selectedDayName">周一</span><span id="dailyPointsDetail">0分</span></div>
+        <div class="chore-list" id="choreList"></div>
+        <div class="action-footer">
+            <button class="btn-secondary" id="resetTodayBtn">🔄 重置今天</button>
+            <button class="btn-secondary" id="resetAllBtn">🗑️ 重置全部数据</button>
+        </div>
+    </div>
+
+    <div class="tab-pane" id="tab-lottery">
+        <div class="lottery-tiers">
+            <div class="lottery-card"><div class="lottery-cost">🎟️ 5积分</div><div class="lottery-desc">小试手气</div><button class="lottery-btn-tier" data-cost="5">✨ 轻量抽奖 ✨</button></div>
+            <div class="lottery-card"><div class="lottery-cost">🎟️ 10积分</div><div class="lottery-desc">好运升级</div><button class="lottery-btn-tier" data-cost="10">🌈 进阶抽奖 🌈</button></div>
+            <div class="lottery-card"><div class="lottery-cost">🎟️ 20积分</div><div class="lottery-desc">超级大奖</div><button class="lottery-btn-tier" data-cost="20">🏆 豪华抽奖 🏆</button></div>
+        </div>
+        <div class="wheel-section">
+            <div class="wheel-container"><canvas id="wheelCanvas" width="500" height="500"></canvas><div class="pointer" id="wheelPointer"><div class="pointer-body"></div><div class="pointer-dot"></div></div></div>
+            <div class="current-tier-label" id="currentTierLabel">5积分奖池</div>
+            <div id="poolItemsList" class="pool-items-list"></div>
+            <div class="prize-preview" id="prizePreview">✨ 点击上方按钮，选择档位抽奖 ✨</div>
+        </div>
+    </div>
+
+    <div class="tab-pane" id="tab-rewards">
+        <div class="backpack-section">
+            <div class="backpack-header"><span class="backpack-title">🎒 奖励背包</span><span class="backpack-stats" id="backpackCount">0个奖励</span></div>
+            <div id="rewardBackpackList" class="reward-list"><div class="empty-backpack">暂无奖励，抽奖获得后显示在这里～</div></div>
+        </div>
+        <div class="exchange-section">
+            <div class="exchange-header"><span>🎁 积分兑换奖励</span><span class="avail-points" id="availPointsBadge">0 分可用</span></div>
+            <div class="reward-grid" id="rewardList"></div>
+            <div class="rule-tip">💡 15分→网购6元/现金4元 &nbsp; 每+5分→网购+2元/现金+2元<br>✅ 可用积分达到15/20/25... 自动提醒</div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    // ════════════════ 孩子配置 ════════════════
+    const CHILDREN = [
+        { id: 'ylj', name: '杨煜瑾', emoji: '👦', color: '#f59e0b', bgColor: '#fef3c7' },
+        { id: 'ysh', name: '杨舒涵', emoji: '👧', color: '#8b5cf6', bgColor: '#ede9fe' }
+    ];
+    let currentChildId = 'ylj';
+
+    // ════════════════ 全局状态（当前孩子的"影子变量"） ════════════════
+    let allWeeks = {}, weekOrder = [], currentWeekId = null;
+    let redeemedPoints = 0, bonusPoints = 0;
+    let promptedThresholds = new Set();
+    let weekStartDates = {};
+    let currentSelectedDayIndex = 0;
+    let rewardInventory = [];
+    let nextRewardId = 1;
+
+    // ════════════════ 共享数据（两个孩子共用） ════════════════
+    let CHORES = [
+        { name: "扫地", icon: "🧹", pointsComplete: 1, pointsFail: -2 },
+        { name: "放衣服", icon: "👕", pointsComplete: 1, pointsFail: -2 },
+        { name: "叠被子", icon: "🛏️", pointsComplete: 1, pointsFail: -2 },
+        { name: "整理桌椅", icon: "🪑", pointsComplete: 1, pointsFail: -2 },
+        { name: "摆鞋", icon: "👟", pointsComplete: 1, pointsFail: -2 },
+        { name: "洗洗手台", icon: "🧽", pointsComplete: 2, pointsFail: -3 },
+        { name: "晾衣服", icon: "🧺", pointsComplete: 2, pointsFail: -3 }
+    ];
+
+    const DEFAULT_POOL_5 = [
+        { name: "谢谢参与", type: "none", value: 0, weight: 2 },
+        { name: "积分 +1 分", type: "points", value: 1, weight: 2 },
+        { name: "家务时间 +1分钟", type: "time", subType: "choreTime", value: 1, weight: 2 },
+        { name: "兑换消耗积分 -1", type: "redeemDiscount", value: 1, weight: 1 },
+        { name: "玩手机 +1分钟", type: "time", subType: "phoneTime", value: 1, weight: 2 }
+    ];
+    const DEFAULT_POOL_10 = [
+        { name: "再接再厉", type: "none", value: 0, weight: 2 },
+        { name: "积分 +3 分", type: "points", value: 3, weight: 2 },
+        { name: "家务时间 +5分钟", type: "time", subType: "choreTime", value: 5, weight: 2 },
+        { name: "兑换消耗积分 -3", type: "redeemDiscount", value: 3, weight: 1 },
+        { name: "玩手机 +5分钟", type: "time", subType: "phoneTime", value: 5, weight: 2 }
+    ];
+    const DEFAULT_POOL_20 = [
+        { name: "积分 +5 分", type: "points", value: 5, weight: 2 },
+        { name: "家务时间 +10分钟", type: "time", subType: "choreTime", value: 10, weight: 2 },
+        { name: "兑换消耗积分 -6", type: "redeemDiscount", value: 6, weight: 1 },
+        { name: "玩手机 +15分钟", type: "time", subType: "phoneTime", value: 15, weight: 2 },
+        { name: "现金券 5元", type: "cashVoucher", value: 5, weight: 1 },
+        { name: "可网购8元物品", type: "onlineVoucher", value: 8, weight: 1 },
+        { name: "可网购10元物品", type: "onlineVoucher", value: 10, weight: 1 },
+        { name: "可网购20元物品", type: "onlineVoucher", value: 20, weight: 1 }
+    ];
+
+    // 奖池：两个孩子共用同一套（通过 openPoolManager 编辑后也是共享的）
+    let customPools = {
+        5: JSON.parse(JSON.stringify(DEFAULT_POOL_5)),
+        10: JSON.parse(JSON.stringify(DEFAULT_POOL_10)),
+        20: JSON.parse(JSON.stringify(DEFAULT_POOL_20))
+    };
+
+    const WEEK_DAYS = ["周一","周二","周三","周四","周五","周六","周日"];
+    const DAY_KEYS = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+
+    // ════════════════ 存储 key ════════════════
+    const STORAGE_KEY_CHORES  = 'merged_chores_v1';   // childStorage
+    const STORAGE_KEY_PW      = 'merged_password_v1'; // { ylj: hash, ysh: hash }
+    const STORAGE_KEY_LOTTERY = 'merged_lottery_v1';  // { ylj: pools, ysh: pools } (currently shared but extensible)
+    const STORAGE_KEY_CHORES_LIST = 'merged_custom_chores_v1'; // shared CHORES array
+    const STORAGE_KEY_CHILD   = 'current_child';      // current child id
+
+    // ════════════════ 内存中的全量存储 ════════════════
+    let childStorage = {};       // { ylj: {...}, ysh: {...} }
+    let passwordHashes = {};     // { ylj: sha256hash, ysh: sha256hash }
+
+    // ════════════════ 密码相关（每个孩子独立） ════════════════
+    let verified = false;
+    let verifiedAt = 0;
+    const VERIFY_TIMEOUT_MS = 5 * 60 * 1000;
+    let verifyingInProgress = false;
+    let pendingCallbacks = [];
+
+    async function hashText(text) {
+        const data = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuffer))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function loadPasswords() {
+        let saved = localStorage.getItem(STORAGE_KEY_PW);
+        if (saved) {
+            try { passwordHashes = JSON.parse(saved); } catch(e) { passwordHashes = {}; }
+        }
+        // 迁移旧格式
+        let oldYlj = localStorage.getItem('chores_password');
+        let oldYsh = localStorage.getItem('shuhan_password');
+        let oldYljHash = localStorage.getItem('chores_password_hash');
+        let oldYshHash = localStorage.getItem('shuhan_password_hash');
+        let needsSave = false;
+
+        if (oldYlj && !passwordHashes.ylj) {
+            passwordHashes.ylj = await hashText(oldYlj);
+            localStorage.removeItem('chores_password');
+            needsSave = true;
+        }
+        if (oldYsh && !passwordHashes.ysh) {
+            passwordHashes.ysh = await hashText(oldYsh);
+            localStorage.removeItem('shuhan_password');
+            needsSave = true;
+        }
+        if (oldYljHash && !passwordHashes.ylj) {
+            passwordHashes.ylj = oldYljHash;
+            localStorage.removeItem('chores_password_hash');
+            needsSave = true;
+        }
+        if (oldYshHash && !passwordHashes.ysh) {
+            passwordHashes.ysh = oldYshHash;
+            localStorage.removeItem('shuhan_password_hash');
+            needsSave = true;
+        }
+        // 确保两个孩子的密码都有默认值 "0521"
+        if (!passwordHashes.ylj) { passwordHashes.ylj = await hashText("0521"); needsSave = true; }
+        if (!passwordHashes.ysh) { passwordHashes.ysh = await hashText("0521"); needsSave = true; }
+        if (needsSave) savePasswordHashes();
+    }
+
+    function savePasswordHashes() {
+        localStorage.setItem(STORAGE_KEY_PW, JSON.stringify(passwordHashes));
+    }
+
+    async function requireVerification(callback) {
+        if (verified && Date.now() - verifiedAt < VERIFY_TIMEOUT_MS) {
+            callback();
+            return;
+        }
+        verified = false;
+        if (verifyingInProgress) {
+            pendingCallbacks.push(callback);
+            return;
+        }
+        verifyingInProgress = true;
+
+        let modal = document.createElement('div');
+        modal.className = 'modal-mask';
+        modal.innerHTML = `<div class="modal-card">
+            <h3>🔒 家长验证</h3>
+            <p style="font-size:0.75rem; color:#6b7280;">当前: ${CHILDREN.find(c => c.id === currentChildId).name}</p>
+            <input type="password" id="verifyPw" class="verify-input" placeholder="密码">
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button id="submitVerify" class="verify-btn">确认</button>
+                <button id="cancelVerify" class="verify-btn modal-btn-cancel">取消</button>
+            </div>
+            <div class="pw-input-group">
+                <button id="changePwBtn" style="background:transparent; border:none; color:#f59e0b; font-size:0.7rem; text-decoration:underline;">修改密码</button>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+
+        const submitBtn = document.getElementById('submitVerify');
+        const cancelBtn = document.getElementById('cancelVerify');
+        const changeBtn = document.getElementById('changePwBtn');
+
+        function cleanup() {
+            verifyingInProgress = false;
+            modal.remove();
+            // 处理排队回调
+            while (pendingCallbacks.length > 0) {
+                let cb = pendingCallbacks.shift();
+                if (verified) cb();
+            }
+        }
+
+        submitBtn.onclick = async () => {
+            let input = document.getElementById('verifyPw').value;
+            let inputHash = await hashText(input);
+            if (inputHash === passwordHashes[currentChildId]) {
+                verified = true;
+                verifiedAt = Date.now();
+                cleanup();
+                callback();
+            } else {
+                alert("密码错误");
+                verifyingInProgress = false;
+                modal.remove();
+            }
+        };
+
+        cancelBtn.onclick = () => {
+            verifyingInProgress = false;
+            modal.remove();
+        };
+
+        changeBtn.onclick = async () => {
+            let oldPwEl = document.getElementById('verifyPw');
+            let oldHash = await hashText(oldPwEl.value);
+            if (oldHash !== passwordHashes[currentChildId]) {
+                alert("原密码错误，无法修改");
+                return;
+            }
+            let newPw = prompt("请输入新密码（至少4位）", "");
+            if (newPw && newPw.length >= 4) {
+                passwordHashes[currentChildId] = await hashText(newPw);
+                savePasswordHashes();
+                alert("密码修改成功！");
+                modal.remove();
+                verifyingInProgress = false;
+            } else if (newPw) {
+                alert("密码至少4位");
+            }
+        };
+    }
+
+    // ════════════════ 奖池（共享） ════════════════
+    function loadCustomPools() {
+        let saved = localStorage.getItem(STORAGE_KEY_LOTTERY);
+        if (saved) {
+            try {
+                let parsed = JSON.parse(saved);
+                if (parsed && Array.isArray(parsed[5]) && parsed[5].length > 0 &&
+                    Array.isArray(parsed[10]) && parsed[10].length > 0 &&
+                    Array.isArray(parsed[20]) && parsed[20].length > 0) {
+                    customPools = parsed;
+                }
+            } catch(e) {}
+        }
+        // 迁移旧 key
+        let oldPools = localStorage.getItem('custom_lottery_pools');
+        if (oldPools && !localStorage.getItem(STORAGE_KEY_LOTTERY)) {
+            try {
+                let p = JSON.parse(oldPools);
+                if (p && p[5] && p[10] && p[20]) {
+                    customPools = p;
+                    localStorage.setItem(STORAGE_KEY_LOTTERY, JSON.stringify(customPools));
+                }
+            } catch(e) {}
+        }
+        let oldShPools = localStorage.getItem('shuhan_lottery_pools');
+        if (oldShPools) {
+            try {
+                let p = JSON.parse(oldShPools);
+                if (p && p[5] && p[10] && p[20] && !localStorage.getItem(STORAGE_KEY_LOTTERY)) {
+                    customPools = p;
+                    localStorage.setItem(STORAGE_KEY_LOTTERY, JSON.stringify(customPools));
+                }
+            } catch(e) {}
+        }
+    }
+
+    function saveCustomPools() {
+        try {
+            localStorage.setItem(STORAGE_KEY_LOTTERY, JSON.stringify(customPools));
+        } catch(e) {}
+    }
+
+    function drawPrizeByPool(pool) {
+        let totalWeight = pool.reduce((sum, p) => sum + (p.weight || 1), 0);
+        let random = Math.random() * totalWeight;
+        let accum = 0;
+        for (let p of pool) {
+            accum += (p.weight || 1);
+            if (random < accum) return { ...p };
+        }
+        return pool[0];
+    }
+
+    // ════════════════ 家务列表（共享） ════════════════
+    function ensureChoreDefaults(arr) {
+        for (let c of arr) {
+            if (c.pointsComplete === undefined) c.pointsComplete = 1;
+            if (c.pointsFail === undefined) c.pointsFail = -2;
+        }
+        return arr;
+    }
+
+    function loadCustomChores() {
+        let saved = localStorage.getItem(STORAGE_KEY_CHORES_LIST);
+        if (saved) {
+            try {
+                let arr = JSON.parse(saved);
+                if (Array.isArray(arr) && arr.length > 0 && arr[0].name) {
+                    CHORES = ensureChoreDefaults(arr);
+                }
+            } catch(e) {}
+        }
+        // 迁移旧 key
+        let oldList = localStorage.getItem('custom_chores_list') || localStorage.getItem('shuhan_custom_chores_list');
+        if (oldList && !localStorage.getItem(STORAGE_KEY_CHORES_LIST)) {
+            try {
+                let arr = JSON.parse(oldList);
+                if (Array.isArray(arr) && arr.length > 0 && arr[0].name) {
+                    CHORES = ensureChoreDefaults(arr);
+                    saveCustomChores();
+                }
+            } catch(e) {}
+        }
+    }
+
+    function saveCustomChores() {
+        try {
+            localStorage.setItem(STORAGE_KEY_CHORES_LIST, JSON.stringify(CHORES));
+        } catch(e) {}
+    }
+
+    // ════════════════ 数据快照（序列化/反序列化当前孩子） ════════════════
+    function snapshotCurrentChild() {
+        return {
+            allWeeks: JSON.parse(JSON.stringify(allWeeks)),
+            weekOrder: [...weekOrder],
+            currentWeekId,
+            redeemedPoints,
+            bonusPoints,
+            promptedThresholds: Array.from(promptedThresholds),
+            weekStartDates: JSON.parse(JSON.stringify(weekStartDates)),
+            currentSelectedDayIndex,
+            rewardInventory: JSON.parse(JSON.stringify(rewardInventory)),
+            nextRewardId
+        };
+    }
+
+    function restoreChildData(snap) {
+        allWeeks = snap.allWeeks;
+        weekOrder = snap.weekOrder;
+        currentWeekId = snap.currentWeekId;
+        redeemedPoints = snap.redeemedPoints || 0;
+        bonusPoints = snap.bonusPoints || 0;
+        promptedThresholds = new Set(snap.promptedThresholds || []);
+        weekStartDates = snap.weekStartDates || {};
+        currentSelectedDayIndex = snap.currentSelectedDayIndex || 0;
+        rewardInventory = snap.rewardInventory || [];
+        nextRewardId = snap.nextRewardId || 1;
+    }
+
+    function createDefaultChildData() {
+        let firstId = "week_1";
+        let week = {};
+        for (let k of DAY_KEYS) {
+            week[k] = { chores: CHORES.map(() => ({ doneCount: 0, failCount: 0 })) };
+        }
+        return {
+            allWeeks: { [firstId]: week },
+            weekOrder: [firstId],
+            currentWeekId: firstId,
+            redeemedPoints: 0,
+            bonusPoints: 0,
+            promptedThresholds: [],
+            weekStartDates: {},
+            currentSelectedDayIndex: 0,
+            rewardInventory: [],
+            nextRewardId: 1
+        };
+    }
+
+    // ════════════════ 全量存储（合并格式） ════════════════
+    function saveAllData() {
+        // 保存当前孩子到 childStorage
+        childStorage[currentChildId] = snapshotCurrentChild();
+        try {
+            localStorage.setItem(STORAGE_KEY_CHORES, JSON.stringify(childStorage));
+        } catch (e) {
+            if (e.name === 'QuotaExceededError' || e.code === 22) {
+                alert("⚠️ 存储空间不足！请清理旧数据。");
+            }
+        }
+    }
+
+    function migrateOldKeys() {
+        let migrated = false;
+        // 杨煜瑾旧 key
+        let oldYlj = localStorage.getItem('Chore_All_Data_v12');
+        if (oldYlj && !childStorage.ylj) {
+            try {
+                let d = JSON.parse(oldYlj);
+                childStorage.ylj = {
+                    allWeeks: d.allWeeks || {},
+                    weekOrder: d.weekOrder || [],
+                    currentWeekId: d.currentWeekId || 'week_1',
+                    redeemedPoints: d.redeemedPoints || 0,
+                    bonusPoints: d.bonusPoints || 0,
+                    promptedThresholds: d.promptedThresholds || [],
+                    weekStartDates: d.weekStartDates || {},
+                    currentSelectedDayIndex: 0,
+                    rewardInventory: d.rewardInventory || [],
+                    nextRewardId: d.nextRewardId || 1
+                };
+                // 对齐 chore 长度
+                alignChildChoreLength('ylj');
+                localStorage.removeItem('Chore_All_Data_v12');
+                migrated = true;
+            } catch(e) {}
+        }
+        // 杨舒涵旧 key
+        let oldYsh = localStorage.getItem('ShuHan_Chore_Data_v1');
+        if (oldYsh && !childStorage.ysh) {
+            try {
+                let d = JSON.parse(oldYsh);
+                childStorage.ysh = {
+                    allWeeks: d.allWeeks || {},
+                    weekOrder: d.weekOrder || [],
+                    currentWeekId: d.currentWeekId || 'week_1',
+                    redeemedPoints: d.redeemedPoints || 0,
+                    bonusPoints: d.bonusPoints || 0,
+                    promptedThresholds: d.promptedThresholds || [],
+                    weekStartDates: d.weekStartDates || {},
+                    currentSelectedDayIndex: 0,
+                    rewardInventory: d.rewardInventory || [],
+                    nextRewardId: d.nextRewardId || 1
+                };
+                alignChildChoreLength('ysh');
+                localStorage.removeItem('ShuHan_Chore_Data_v1');
+                migrated = true;
+            } catch(e) {}
+        }
+        if (migrated) {
+            localStorage.setItem(STORAGE_KEY_CHORES, JSON.stringify(childStorage));
+        }
+    }
+
+    function alignChildChoreLength(childId) {
+        let snap = childStorage[childId];
+        if (!snap || !snap.allWeeks) return;
+        let expectedLen = CHORES.length;
+        for (let wid of snap.weekOrder) {
+            let week = snap.allWeeks[wid];
+            if (!week) continue;
+            for (let dk of DAY_KEYS) {
+                let day = week[dk];
+                if (!day || !day.chores) {
+                    week[dk] = { chores: CHORES.map(() => ({ doneCount: 0, failCount: 0 })) };
+                    continue;
+                }
+                while (day.chores.length < expectedLen) {
+                    day.chores.push({ doneCount: 0, failCount: 0 });
+                }
+                if (day.chores.length > expectedLen) {
+                    day.chores = day.chores.slice(0, expectedLen);
+                }
+            }
+        }
+    }
+
+    function alignAllChildrenChoreLength() {
+        for (let c of CHILDREN) {
+            alignChildChoreLength(c.id);
+        }
+    }
+
+    function loadAllData() {
+        let saved = localStorage.getItem(STORAGE_KEY_CHORES);
+        if (saved) {
+            try {
+                childStorage = JSON.parse(saved);
+            } catch(e) {
+                childStorage = {};
+            }
+        }
+        // 迁移旧 key
+        migrateOldKeys();
+
+        // 确保两个孩子都有数据
+        let needsSave = false;
+        for (let c of CHILDREN) {
+            if (!childStorage[c.id]) {
+                childStorage[c.id] = createDefaultChildData();
+                needsSave = true;
+            }
+        }
+        if (needsSave) {
+            localStorage.setItem(STORAGE_KEY_CHORES, JSON.stringify(childStorage));
+        }
+
+        // 加载当前孩子
+        currentChildId = localStorage.getItem(STORAGE_KEY_CHILD) || 'ylj';
+        if (!CHILDREN.find(c => c.id === currentChildId)) {
+            currentChildId = 'ylj';
+        }
+        restoreChildData(childStorage[currentChildId]);
+        initWeekDates();
+        saveAllData();
+    }
+
+    function switchChild(childId) {
+        if (childId === currentChildId) return;
+        if (animating) { alert("抽奖动画中，请稍后再切换"); return; }
+
+        // 保存当前
+        childStorage[currentChildId] = snapshotCurrentChild();
+        saveAllData();
+
+        // 切换
+        currentChildId = childId;
+        localStorage.setItem(STORAGE_KEY_CHILD, currentChildId);
+        verified = false; // 切换孩子后重新验证
+
+        // 加载新孩子
+        restoreChildData(childStorage[currentChildId]);
+
+        // 更新 UI
+        updateHeroTitle();
+        renderChildSelector();
+        refreshAllUI();
+    }
+
+    // ════════════════ 转盘 ════════════════
+    let canvas, ctx, wheelAngle = 0, animating = false, animationFrame = null;
+    let prizeSegments = [];
+
+    function setupCanvas() {
+        if (!canvas || !ctx) return;
+        const dpr = window.devicePixelRatio || 1;
+        const container = canvas.parentElement;
+        const displaySize = Math.min(container.clientWidth || 320, 320);
+        canvas.style.width = displaySize + 'px';
+        canvas.style.height = displaySize + 'px';
+        canvas.width = displaySize * dpr;
+        canvas.height = displaySize * dpr;
+        const scale = displaySize * dpr / 500;
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    }
+
+    function rebuildSegmentsFromPool(pool) {
+        prizeSegments = pool.map(p => ({ name: p.name }));
+        let container = document.getElementById("poolItemsList");
+        if (container) {
+            container.innerHTML = pool.map(p =>
+                `<span class="pool-badge">${p.name.length > 10 ? p.name.slice(0, 8) + ".." : p.name}</span>`
+            ).join('');
+        }
+        drawWheel(prizeSegments, wheelAngle);
+    }
+
+    // ════════════════ 转盘调色板 ════════════════
+    const WHEEL_COLORS = ['#FF6B6B','#FFA94D','#FFD43B','#69DB7C','#4DABF7','#DA77F2','#F783AC','#20C997'];
+    const WHEEL_COLORS_DARK = ['#C92A2A','#D0680C','#E67700','#2B8A3E','#1864AB','#862E9C','#A61E4D','#087F5B'];
+
+    // 粒子系统
+    let particles = [];
+
+    function spawnParticle(x, y) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 3;
+        return {
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1,
+            decay: 0.02 + Math.random() * 0.04,
+            size: 2 + Math.random() * 3,
+            color: WHEEL_COLORS[Math.floor(Math.random() * WHEEL_COLORS.length)]
+        };
+    }
+
+    function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= p.decay;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+    }
+
+    function drawParticles(ctx, baseScale) {
+        for (let p of particles) {
+            ctx.save();
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * baseScale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function drawWheel(segments, rotateAngle, highlightIndex) {
+        if (!canvas || !ctx) return;
+        if (!segments || segments.length === 0) return;
+
+        const w = 500, h = 500, cx = 250, cy = 250;
+        const mainRadius = 185;
+        const outerRingInner = mainRadius + 4;
+        const outerRingOuter = mainRadius + 24;
+        const innerRingRadius = 62;
+        const hubRadius = 28;
+
+        ctx.clearRect(0, 0, w, h);
+
+        const angleStep = (2 * Math.PI) / segments.length;
+        const n = segments.length;
+
+        // ── 1. 外圈装饰环 ──
+        // 外圈背景（古铜金）
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerRingOuter, 0, Math.PI * 2);
+        ctx.fillStyle = '#3D2B1F';
+        ctx.fill();
+
+        // 外圈金色环
+        const ringGrad = ctx.createRadialGradient(cx, cy, outerRingInner, cx, cy, outerRingOuter);
+        ringGrad.addColorStop(0, '#C8A84E');
+        ringGrad.addColorStop(0.5, '#E8D48B');
+        ringGrad.addColorStop(1, '#8B6914');
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerRingOuter, 0, Math.PI * 2);
+        ctx.arc(cx, cy, outerRingInner, 0, Math.PI * 2, true);
+        ctx.fillStyle = ringGrad;
+        ctx.fill();
+
+        // 外圈灯泡（交替亮暗）
+        const bulbCount = n * 6;
+        for (let i = 0; i < bulbCount; i++) {
+            const bulbAngle = (i / bulbCount) * Math.PI * 2 + rotateAngle * 0.3;
+            const bulbR = (outerRingInner + outerRingOuter) / 2;
+            const bx = cx + Math.cos(bulbAngle) * bulbR;
+            const by = cy + Math.sin(bulbAngle) * bulbR;
+            const lit = (i % 2 === 0);
+            ctx.beginPath();
+            ctx.arc(bx, by, lit ? 3 : 2, 0, Math.PI * 2);
+            ctx.fillStyle = lit ? '#FFFDE7' : '#8B7355';
+            if (lit) { ctx.shadowColor = '#FFE082'; ctx.shadowBlur = 4; }
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // ── 2. 主扇区 ──
+        for (let i = 0; i < n; i++) {
+            const start = i * angleStep + rotateAngle;
+            const end = (i + 1) * angleStep + rotateAngle;
+            const mid = start + angleStep / 2;
+
+            // 扇区裁剪路径
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, mainRadius, start, end);
+            ctx.closePath();
+            ctx.clip();
+
+            // 径向渐变填充
+            const grad = ctx.createRadialGradient(cx, cy, mainRadius * 0.25, cx, cy, mainRadius);
+            grad.addColorStop(0, WHEEL_COLORS[i % WHEEL_COLORS.length]);
+            grad.addColorStop(0.6, WHEEL_COLORS[i % WHEEL_COLORS.length]);
+            grad.addColorStop(1, WHEEL_COLORS_DARK[i % WHEEL_COLORS_DARK.length]);
+            ctx.fillStyle = grad;
+            ctx.fillRect(cx - mainRadius, cy - mainRadius, mainRadius * 2, mainRadius * 2);
+
+            // 高光条纹（径向亮线）
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, mainRadius, start + angleStep * 0.1, start + angleStep * 0.25);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.fill();
+
+            ctx.restore();
+
+            // 段间金色分隔线
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(start) * mainRadius, cy + Math.sin(start) * mainRadius);
+            ctx.strokeStyle = 'rgba(255,215,0,0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // ── 3. 文字 ──
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(mid);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 17px "PingFang SC", "Microsoft YaHei", system-ui';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            let txt = segments[i].name;
+            const maxWidth = mainRadius * 0.52;
+            while (ctx.measureText(txt).width > maxWidth && txt.length > 1) {
+                txt = txt.slice(0, -1);
+            }
+            if (txt.length < segments[i].name.length) txt += '..';
+
+            // 文字阴影增加可读性
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 2;
+            ctx.fillText(txt, mainRadius * 0.62, 0);
+            ctx.restore();
+        }
+
+        // ── 4. 中奖高亮（如果设置了 highlightIndex） ──
+        if (highlightIndex >= 0 && highlightIndex < n) {
+            const hStart = highlightIndex * angleStep + rotateAngle;
+            const hEnd = (highlightIndex + 1) * angleStep + rotateAngle;
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, mainRadius, hStart, hEnd);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,215,0,0.6)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // ── 5. 内圈装饰环 ──
+        const innerGrad = ctx.createRadialGradient(cx, cy, innerRingRadius - 8, cx, cy, innerRingRadius);
+        innerGrad.addColorStop(0, 'rgba(0,0,0,0.15)');
+        innerGrad.addColorStop(0.5, 'rgba(0,0,0,0.35)');
+        innerGrad.addColorStop(1, 'rgba(0,0,0,0.05)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, innerRingRadius, 0, Math.PI * 2);
+        ctx.fillStyle = innerGrad;
+        ctx.fill();
+
+        // 内圈金色细边
+        ctx.beginPath();
+        ctx.arc(cx, cy, innerRingRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // ── 6. 中心 Hub ──
+        // 外环
+        const hubOuter = ctx.createRadialGradient(cx, cy, hubRadius * 0.6, cx, cy, hubRadius);
+        hubOuter.addColorStop(0, '#FFD700');
+        hubOuter.addColorStop(0.7, '#E8A800');
+        hubOuter.addColorStop(1, '#8B6914');
+        ctx.beginPath();
+        ctx.arc(cx, cy, hubRadius, 0, Math.PI * 2);
+        ctx.fillStyle = hubOuter;
+        ctx.fill();
+        ctx.strokeStyle = '#FFE082';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 内圆
+        const hubInner = ctx.createRadialGradient(cx - 3, cy - 3, 2, cx, cy, hubRadius * 0.5);
+        hubInner.addColorStop(0, '#FFF8E1');
+        hubInner.addColorStop(1, '#FF6B35');
+        ctx.beginPath();
+        ctx.arc(cx, cy, hubRadius * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = hubInner;
+        ctx.fill();
+
+        // 中心高光点
+        ctx.beginPath();
+        ctx.arc(cx - 2, cy - 3, 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.fill();
+
+        // ── 6. 粒子 ──
+        drawParticles(ctx, 1);
+    }
+
+    function startTierSpin(cost) {
+        if (animating) return;
+
+        const pool = customPools[cost];
+        if (!pool || !pool.length) {
+            alert("奖池为空");
+            return;
+        }
+
+        let avail = computeAvailablePoints();
+        if (avail < cost) {
+            alert(`积分不足${cost}分`);
+            return;
+        }
+
+        const finalPrize = drawPrizeByPool(pool);
+
+        redeemedPoints += cost;
+        saveAllData();
+        refreshAllUI();
+
+        rebuildSegmentsFromPool(pool);
+        document.getElementById("currentTierLabel").innerHTML =
+            (cost === 5 ? "5积分" : cost === 10 ? "10积分" : "20积分") + "奖池";
+
+        // 转盘与奖品同步
+        const prizeIndex = pool.findIndex(p => p.name === finalPrize.name);
+        const segmentAngle = (2 * Math.PI) / pool.length;
+        const segmentCenter = prizeIndex * segmentAngle + segmentAngle / 2;
+        let targetAngle = (-Math.PI / 2) - segmentCenter;
+        targetAngle = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        let spinDelta = targetAngle - wheelAngle;
+        if (spinDelta < 0) spinDelta += 2 * Math.PI;
+        const fullSpins = 6 + Math.floor(Math.random() * 4);
+        const totalSpinRad = fullSpins * 2 * Math.PI + spinDelta;
+
+        let startTime = null;
+        const duration = 3200;
+        const startAngle = wheelAngle;
+        const cx = 250, cy = 250;
+        const mainRadius = 185;
+        let lastParticleSpawn = 0;
+        let winningFlashDone = false;
+
+        function animate(t) {
+            if (!startTime) startTime = t;
+            let elapsed = t - startTime;
+            // 缓动：先快后慢，末端有轻微回弹
+            const rawEase = Math.min(1, elapsed / duration);
+            const ease = rawEase < 0.75
+                ? 1.1 * rawEase - 0.1 * rawEase * rawEase  // 前 75% 较快
+                : 1 - Math.pow(1 - rawEase, 4) * 1.3;         // 后 25% 减速
+
+            let current = startAngle + totalSpinRad * ease;
+            wheelAngle = current % (Math.PI * 2);
+
+            // 粒子生成
+            if (elapsed - lastParticleSpawn > 50 && elapsed < duration * 0.85) {
+                lastParticleSpawn = elapsed;
+                const edgeAngle = Math.random() * Math.PI * 2;
+                const px = cx + Math.cos(edgeAngle) * mainRadius;
+                const py = cy + Math.sin(edgeAngle) * mainRadius;
+                for (let j = 0; j < 2; j++) {
+                    particles.push(spawnParticle(px, py));
+                }
+            }
+            updateParticles();
+            // 限制粒子数量
+            if (particles.length > 120) particles.splice(0, particles.length - 120);
+
+            // 中奖段高亮：最后阶段传递 highlightIndex 给 drawWheel
+            let hlIdx = -1;
+            if (rawEase >= 0.98) {
+                winningFlashDone = true;
+                hlIdx = prizeIndex;
+            }
+            drawWheel(prizeSegments, wheelAngle, hlIdx);
+
+            if (ease < 1 || (elapsed < duration + 600 && winningFlashDone)) {
+                animationFrame = requestAnimationFrame(animate);
+            } else {
+                // 指针弹跳
+                const pointer = document.getElementById('wheelPointer');
+                if (pointer) {
+                    pointer.classList.add('bouncing');
+                    setTimeout(() => pointer.classList.remove('bouncing'), 900);
+                }
+                // 清理粒子
+                particles = [];
+
+                // 显示结果
+                setTimeout(() => {
+                    addRewardToInventory(finalPrize);
+                    showPrizeResult(finalPrize);
+                }, 200);
+
+                cancelAnimationFrame(animationFrame);
+                animating = false;
+                setTimeout(() => {
+                    refreshAllUI();
+                    checkThresholdByAvailable(computeAvailablePoints());
+                }, 300);
+            }
+        }
+        animating = true;
+        animationFrame = requestAnimationFrame(animate);
+    }
+
+    function addRewardToInventory(prize) {
+        if (prize.type === "none" && prize.value === 0) return;
+        let newReward = {
+            id: nextRewardId++,
+            name: prize.name,
+            type: prize.type,
+            value: prize.value || 0,
+            subType: prize.subType
+        };
+        rewardInventory.push(newReward);
+        saveAllData();
+    }
+
+    function showPrizeResult(prize) {
+        let overlay = document.createElement('div');
+        overlay.className = 'modal-mask';
+        overlay.innerHTML = `<div class="modal-card">
+            <div style="font-size:3rem">🎁</div>
+            <h3>${prize.name}</h3>
+            <p>奖励已存入背包</p>
+            <button class="verify-btn" style="background:#f59e0b; padding:8px 24px; border-radius:40px; touch-action:manipulation;">确定</button>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('button').onclick = () => overlay.remove();
+    }
+
+    // ════════════════ 工具函数 ════════════════
+    function formatDate(date) {
+        let y = date.getFullYear();
+        let m = String(date.getMonth() + 1).padStart(2, '0');
+        let d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function initWeekDates() {
+        if (weekOrder.length === 0) return;
+        if (!weekStartDates[weekOrder[0]]) {
+            let today = new Date();
+            let day = today.getDay();
+            let diff = (day === 0 ? -6 : 1 - day);
+            let monday = new Date(today);
+            monday.setDate(today.getDate() + diff);
+            weekStartDates[weekOrder[0]] = formatDate(monday);
+        }
+        for (let i = 1; i < weekOrder.length; i++) {
+            let prev = weekStartDates[weekOrder[i - 1]];
+            if (prev && !weekStartDates[weekOrder[i]]) {
+                let d = new Date(prev);
+                d.setDate(d.getDate() + 7);
+                weekStartDates[weekOrder[i]] = formatDate(d);
+            }
+        }
+        saveAllData();
+    }
+
+    function getDateForDay(weekId, dayIndex) {
+        let m = new Date(weekStartDates[weekId]);
+        if (isNaN(m.getTime())) return "";
+        let d = new Date(m);
+        d.setDate(m.getDate() + dayIndex);
+        return `${d.getMonth() + 1}/${d.getDate()}`;
+    }
+
+    function getWeekRangeText(weekId) {
+        let m = new Date(weekStartDates[weekId]);
+        if (isNaN(m.getTime())) return "";
+        let sun = new Date(m);
+        sun.setDate(m.getDate() + 6);
+        return `${m.getMonth() + 1}/${m.getDate()}-${sun.getMonth() + 1}/${sun.getDate()}`;
+    }
+
+    function getCurrentWeekData() {
+        if (!allWeeks[currentWeekId]) {
+            allWeeks[currentWeekId] = {};
+            for (let k of DAY_KEYS) {
+                allWeeks[currentWeekId][k] = { chores: CHORES.map(() => ({ doneCount: 0, failCount: 0 })) };
+            }
+        }
+        return allWeeks[currentWeekId];
+    }
+
+    function getChorePoints(idx) {
+        let c = CHORES[idx];
+        return {
+            complete: (c && c.pointsComplete !== undefined) ? c.pointsComplete : 1,
+            fail: (c && c.pointsFail !== undefined) ? c.pointsFail : -2
+        };
+    }
+
+    function computeRawTotalScore() {
+        let total = 0;
+        for (let wid of weekOrder) {
+            let week = allWeeks[wid];
+            if (!week) continue;
+            for (let dk of DAY_KEYS) {
+                let day = week[dk];
+                if (day && day.chores) {
+                    for (let idx = 0; idx < day.chores.length; idx++) {
+                        let chore = day.chores[idx];
+                        let pts = getChorePoints(idx);
+                        total += chore.doneCount * pts.complete;
+                        total += chore.failCount * pts.fail;
+                    }
+                }
+            }
+        }
+        return total + bonusPoints;
+    }
+
+    function computeAvailablePoints() {
+        return computeRawTotalScore() - redeemedPoints;
+    }
+
+    function checkThresholdByAvailable(available) {
+        const maxCheck = Math.min(available, 200);
+        let newly = [];
+        for (let th = 15; th <= maxCheck; th += 5) {
+            if (available >= th && !promptedThresholds.has(th)) {
+                newly.push(th);
+                promptedThresholds.add(th);
+            }
+        }
+        if (newly.length > 0) {
+            let child = CHILDREN.find(c => c.id === currentChildId);
+            alert(`🎉 ${child.name} 可用积分已达到 ${Math.max(...newly)} 分！快去兑换奖励或抽奖吧~`);
+            saveAllData();
+        }
+    }
+
+    // ════════════════ 家务 UI ════════════════
+    function renderChoreList() {
+        let week = getCurrentWeekData();
+        let day = week[DAY_KEYS[currentSelectedDayIndex]];
+        if (!day || !day.chores) return;
+
+        let html = '';
+        for (let i = 0; i < CHORES.length; i++) {
+            let chore = CHORES[i];
+            let pts = getChorePoints(i);
+            let data = (i < day.chores.length)
+                ? day.chores[i]
+                : { doneCount: 0, failCount: 0 };
+            let doneCount = data.doneCount || 0;
+            let failCount = data.failCount || 0;
+            let netScore = doneCount * pts.complete + failCount * pts.fail;
+            let doneLabel = pts.complete >= 0 ? `+${pts.complete}` : `${pts.complete}`;
+            let failLabel = pts.fail >= 0 ? `+${pts.fail}` : `${pts.fail}`;
+
+            html += `<div class="chore-item">
+                <div class="chore-main">
+                    <div class="chore-info">
+                        <div class="chore-icon">${chore.icon}</div>
+                        <div class="chore-name">${chore.name}</div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-chore btn-complete" data-action="done" data-idx="${i}">✅ 完成 ${doneLabel}</button>
+                        <button class="btn-chore btn-fail" data-action="fail" data-idx="${i}">❌ 没做到 ${failLabel}</button>
+                    </div>
+                </div>
+                <div class="chore-stats">
+                    <span class="stat-item">✅ 完成 ${doneCount}次</span>
+                    <span class="stat-item">❌ 没做到 ${failCount}次</span>
+                    <span class="stat-item" style="font-weight:700;">📊 今日净得分 ${netScore}</span>
+                </div>
+            </div>`;
+        }
+        document.getElementById("choreList").innerHTML = html;
+        document.querySelectorAll('.btn-chore').forEach(btn =>
+            btn.addEventListener('click', choreHandler)
+        );
+    }
+
+    function choreHandler(e) {
+        let btn = e.currentTarget;
+        let action = btn.dataset.action;
+        let idx = parseInt(btn.dataset.idx);
+        let week = getCurrentWeekData();
+        let dayKey = DAY_KEYS[currentSelectedDayIndex];
+        let chores = week[dayKey].chores;
+        if (idx >= chores.length) return;
+        if (action === 'done') chores[idx].doneCount++;
+        else if (action === 'fail') chores[idx].failCount++;
+        else return;
+        saveAllData();
+        refreshAllUI();
+    }
+
+    function updateDailySummary() {
+        let week = getCurrentWeekData();
+        let day = week[DAY_KEYS[currentSelectedDayIndex]];
+        let total = 0;
+        if (day && day.chores) {
+            for (let idx = 0; idx < day.chores.length; idx++) {
+                let c = day.chores[idx];
+                let pts = getChorePoints(idx);
+                total += c.doneCount * pts.complete + c.failCount * pts.fail;
+            }
+        }
+        let date = getDateForDay(currentWeekId, currentSelectedDayIndex);
+        document.getElementById("selectedDayName").innerText =
+            date ? `${WEEK_DAYS[currentSelectedDayIndex]} (${date})` : WEEK_DAYS[currentSelectedDayIndex];
+        document.getElementById("dailyPointsDetail").innerText = total + " 分";
+    }
+
+    function renderWeekNav() {
+        let html = '';
+        for (let i = 0; i < WEEK_DAYS.length; i++) {
+            let date = getDateForDay(currentWeekId, i);
+            let display = date ? `${WEEK_DAYS[i].slice(0, 2)} ${date}` : WEEK_DAYS[i];
+            let active = (i === currentSelectedDayIndex) ? 'active' : '';
+            html += `<div class="week-day ${active}" data-day-index="${i}">${display}</div>`;
+        }
+        document.getElementById("weekNav").innerHTML = html;
+        document.querySelectorAll('.week-day').forEach(el => {
+            el.addEventListener('click', () => {
+                let idx = parseInt(el.dataset.dayIndex);
+                if (!isNaN(idx) && idx !== currentSelectedDayIndex) {
+                    currentSelectedDayIndex = idx;
+                    renderChoreList();
+                    updateDailySummary();
+                }
+            });
+        });
+    }
+
+    function resetCurrentDay() {
+        if (confirm(`重置本周${WEEK_DAYS[currentSelectedDayIndex]}所有家务记录？`)) {
+            let week = getCurrentWeekData();
+            let dayKey = DAY_KEYS[currentSelectedDayIndex];
+            week[dayKey].chores = CHORES.map(() => ({ doneCount: 0, failCount: 0 }));
+            saveAllData();
+            refreshAllUI();
+        }
+    }
+
+    function resetAllGlobalData() {
+        requireVerification(() => {
+            let child = CHILDREN.find(c => c.id === currentChildId);
+            if (confirm(`⚠️ 重置${child.name}的全部数据？所有家务记录、兑换、抽奖都将清空！`)) {
+                childStorage[currentChildId] = createDefaultChildData();
+                restoreChildData(childStorage[currentChildId]);
+                initWeekDates();
+                saveAllData();
+                refreshAllUI();
+            }
+        });
+    }
+
+    // ════════════════ 兑换与背包 ════════════════
+    function renderExchange(available) {
+        let html = '';
+        const maxTh = Math.max(available, 15) + 50;
+        for (let pts = 15; pts <= maxTh; pts += 5) {
+            let online = 6 + ((pts - 15) / 5) * 2;
+            let cash = 4 + ((pts - 15) / 5) * 2;
+            let can = available >= pts;
+            html += `<div class="reward-card">
+                <div>🎯 ${pts}积分 → 网购${online}元 / 现金${cash}元</div>
+                <div>
+                    <button class="exchange-btn ${can ? '' : 'disabled'}" data-points="${pts}" data-type="online" ${can ? '' : 'disabled'}>网购</button>
+                    <button class="exchange-btn ${can ? '' : 'disabled'}" data-points="${pts}" data-type="cash" ${can ? '' : 'disabled'}>现金</button>
+                </div>
+            </div>`;
+        }
+        document.getElementById("rewardList").innerHTML = html;
+        document.querySelectorAll('.exchange-btn').forEach(btn => {
+            btn.addEventListener('click', exchangeHandler);
+        });
+    }
+
+    function exchangeHandler(e) {
+        let btn = e.currentTarget;
+        if (btn.disabled || btn.classList.contains('disabled')) return;
+        let points = parseInt(btn.dataset.points);
+        let type = btn.dataset.type;
+        let avail = computeAvailablePoints();
+
+        if (avail < points) { alert("积分不足"); return; }
+        let child = CHILDREN.find(c => c.id === currentChildId);
+        if (confirm(`${child.name}消耗${points}积分兑换${type === 'online' ? '网购' : '现金'}奖励吗？`)) {
+            redeemedPoints += points;
+            saveAllData();
+            refreshAllUI();
+            alert("兑换成功！");
+            checkThresholdByAvailable(computeAvailablePoints());
+        }
+    }
+
+    function renderBackpack() {
+        let container = document.getElementById("rewardBackpackList");
+        if (!rewardInventory.length) {
+            container.innerHTML = '<div class="empty-backpack">🎒 暂无奖励</div>';
+            document.getElementById("backpackCount").innerText = "0个奖励";
+            return;
+        }
+        let html = '';
+        rewardInventory.forEach(item => {
+            let display = item.name;
+            if (item.type === "onlineVoucher") display = `🛒 网购券 ${item.value}元`;
+            if (item.type === "cashVoucher") display = `💰 现金券 ${item.value}元`;
+            if (item.type === "time") display = `⏱️ ${item.name} (${item.subType === 'phoneTime' ? '玩手机' : '家务时间'})`;
+            if (item.type === "points") display = `⭐ ${item.name}`;
+            if (item.type === "redeemDiscount") display = `🔖 ${item.name}`;
+            html += `<div class="reward-item">
+                <span>${display}</span>
+                <button class="use-btn" data-id="${item.id}">使用</button>
+            </div>`;
+        });
+        container.innerHTML = html;
+        document.getElementById("backpackCount").innerText = `${rewardInventory.length}个奖励`;
+
+        document.querySelectorAll('#rewardBackpackList .use-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let id = parseInt(btn.dataset.id);
+                useRewardById(id);
+            });
+        });
+    }
+
+    function useRewardById(id) {
+        let idx = rewardInventory.findIndex(r => r.id === id);
+        if (idx === -1) return;
+        let r = rewardInventory[idx];
+
+        if (r.type === "points") {
+            bonusPoints += r.value;
+            alert(`✅ 获得 +${r.value} 积分！`);
+        } else if (r.type === "redeemDiscount") {
+            redeemedPoints = Math.max(0, redeemedPoints - r.value);
+            alert(`✅ 兑换抵扣 ${r.value} 积分！`);
+        } else if (r.type === "onlineVoucher" || r.type === "cashVoucher") {
+            let label = r.type === "onlineVoucher" ? "网购" : "现金";
+            requireVerification(() => {
+                let idx2 = rewardInventory.findIndex(rr => rr.id === id);
+                if (idx2 === -1) return;
+                rewardInventory.splice(idx2, 1);
+                saveAllData();
+                refreshAllUI();
+                alert(`✅ ${label}券已标记使用，请家长兑现`);
+            });
+            return;
+        } else if (r.type === "time") {
+            let subLabel = r.subType === 'phoneTime' ? '玩手机' : '家务时间';
+            alert(`⏱️ ${subLabel} ${r.value}分钟已生效`);
+        } else {
+            alert("奖励已使用");
+        }
+
+        rewardInventory.splice(idx, 1);
+        saveAllData();
+        refreshAllUI();
+    }
+
+    function updateGlobalPointsDisplay() {
+        let pts = computeAvailablePoints();
+        let child = CHILDREN.find(c => c.id === currentChildId);
+        document.getElementById("globalPointsDisplay").innerHTML = `🏆 ${child.emoji} ${pts}分`;
+    }
+
+    function updateHeroTitle() {
+        let child = CHILDREN.find(c => c.id === currentChildId);
+        document.getElementById("heroTitle").innerHTML = `${child.name} <small>家务积分表</small>`;
+    }
+
+    function renderChildSelector() {
+        let html = '';
+        for (let c of CHILDREN) {
+            let active = c.id === currentChildId ? ' active' : '';
+            let snap = childStorage[c.id];
+            let pts = 0;
+            if (snap) {
+                // 快速计算该孩子的可用积分（用于显示）
+                let total = 0;
+                for (let wid of (snap.weekOrder || [])) {
+                    let week = snap.allWeeks[wid];
+                    if (!week) continue;
+                    for (let dk of DAY_KEYS) {
+                        let day = week[dk];
+                        if (day && day.chores) {
+                            for (let idx = 0; idx < day.chores.length; idx++) {
+                                let chore = day.chores[idx];
+                                let pts = getChorePoints(idx);
+                                total += (chore.doneCount || 0) * pts.complete;
+                                total += (chore.failCount || 0) * pts.fail;
+                            }
+                        }
+                    }
+                }
+                total += (snap.bonusPoints || 0);
+                pts = total - (snap.redeemedPoints || 0);
+            }
+            html += `<button class="child-btn${active}" data-child="${c.id}" style="${active ? '--child-color:' + c.color : ''}">
+                <span class="child-emoji">${c.emoji}</span>
+                <span>${c.name}</span>
+                <span class="child-points-mini">🏆 ${pts}</span>
+            </button>`;
+        }
+        document.getElementById("childSelector").innerHTML = html;
+        document.querySelectorAll('.child-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let cid = btn.dataset.child;
+                if (cid !== currentChildId) switchChild(cid);
+            });
+        });
+    }
+
+    function refreshAllUI() {
+        let avail = computeAvailablePoints();
+        document.getElementById("availPointsBadge").innerText = avail + " 分可用";
+        renderExchange(avail);
+        checkThresholdByAvailable(avail);
+        renderWeekNav();
+        renderChoreList();
+        updateDailySummary();
+        updateWeekSelectorUI();
+        renderBackpack();
+        updateGlobalPointsDisplay();
+        renderChildSelector();
+        updateHeroTitle();
+        drawWheel(prizeSegments, wheelAngle);
+    }
+
+    function updateWeekSelectorUI() {
+        let weekNumber = currentWeekId.split('_')[1];
+        document.getElementById("currentWeekLabel").innerText = `第${weekNumber}周`;
+        document.getElementById("weekDateRange").innerText =
+            weekStartDates[currentWeekId] ? `📅 ${getWeekRangeText(currentWeekId)}` : '';
+    }
+
+    function switchToPrevWeek() {
+        let idx = weekOrder.indexOf(currentWeekId);
+        if (idx > 0) { currentWeekId = weekOrder[idx - 1]; refreshAllUI(); }
+        else alert("已是第一周");
+    }
+
+    function switchToNextWeek() {
+        let idx = weekOrder.indexOf(currentWeekId);
+        if (idx < weekOrder.length - 1) { currentWeekId = weekOrder[idx + 1]; refreshAllUI(); }
+        else alert("已是最后一周");
+    }
+
+    function createNewWeek() {
+        let maxNum = 0;
+        for (let wid of weekOrder) {
+            let n = parseInt(wid.split('_')[1]);
+            if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+        let newId = "week_" + (maxNum + 1);
+
+        allWeeks[newId] = {};
+        for (let k of DAY_KEYS) {
+            allWeeks[newId][k] = { chores: CHORES.map(() => ({ doneCount: 0, failCount: 0 })) };
+        }
+        weekOrder.push(newId);
+        let lastId = weekOrder[weekOrder.length - 2];
+        if (lastId && weekStartDates[lastId]) {
+            let d = new Date(weekStartDates[lastId]);
+            d.setDate(d.getDate() + 7);
+            weekStartDates[newId] = formatDate(d);
+        } else {
+            initWeekDates();
+        }
+        currentWeekId = newId;
+        saveAllData();
+        refreshAllUI();
+    }
+
+    function setWeekDate() {
+        let cur = weekStartDates[currentWeekId] || formatDate(new Date());
+        let newDate = prompt("请输入本周周一的日期 (YYYY-MM-DD)", cur);
+        if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+            let d = new Date(newDate);
+            if (!isNaN(d.getTime())) {
+                weekStartDates[currentWeekId] = formatDate(d);
+                saveAllData();
+                refreshAllUI();
+            } else {
+                alert("无效日期");
+            }
+        } else if (newDate) {
+            alert("格式错误，请使用 YYYY-MM-DD");
+        }
+    }
+
+    // ════════════════ 自定义家务编辑器 ════════════════
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    async function openChoreEditor() {
+        await new Promise(resolve => requireVerification(resolve));
+
+        let modal = document.createElement('div');
+        modal.className = 'modal-mask';
+
+        let rowsHtml = CHORES.map((c, i) => `
+            <div class="chore-edit-row">
+                <span style="font-size:1.3rem; width:32px; text-align:center;">${c.icon}</span>
+                <input type="text" value="${escapeHtml(c.name)}" data-idx="${i}" class="chore-name-input" placeholder="名称" style="flex:2;">
+                <input type="text" value="${escapeHtml(c.icon)}" data-idx="${i}" class="chore-icon-input" placeholder="图标" style="width:44px; flex:0 0 44px;">
+                <input type="number" value="${c.pointsComplete || 1}" data-idx="${i}" class="chore-pts-done-input" placeholder="完成分" step="1" style="width:48px; flex:0 0 48px; text-align:center;">
+                <input type="number" value="${c.pointsFail || -2}" data-idx="${i}" class="chore-pts-fail-input" placeholder="扣分" step="1" style="width:48px; flex:0 0 48px; text-align:center;">
+                <button class="chore-del-btn" data-idx="${i}">✕</button>
+            </div>`).join('');
+
+        modal.innerHTML = `<div class="modal-card">
+            <h3>✏️ 自定义家务</h3>
+            <p style="font-size:0.75rem; color:#6b7280; margin:6px 0;">家务列表两个孩子共享 · 可自定义每项积分</p>
+            <div style="display:flex; gap:6px; padding:4px 8px; font-size:0.6rem; color:#9ca3af; font-weight:600;">
+                <span style="width:32px;"></span><span style="flex:2;">名称</span><span style="width:44px;">图标</span><span style="width:48px;">完成</span><span style="width:48px;">扣分</span><span style="width:28px;"></span>
+            </div>
+            <div id="choreEditList">${rowsHtml}</div>
+            <div style="margin-top: 12px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button id="addChoreBtn" class="modal-btn" style="background:#10b981;">+ 新增家务</button>
+                <button id="saveChoresBtn" class="modal-btn">💾 保存</button>
+                <button class="modal-btn modal-btn-cancel" id="closeChoreEditor">取消</button>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+
+        function close() { modal.remove(); }
+        document.getElementById('closeChoreEditor').onclick = close;
+
+        document.getElementById('addChoreBtn').onclick = () => {
+            let list = document.getElementById('choreEditList');
+            let idx = list.querySelectorAll('.chore-edit-row').length;
+            let row = document.createElement('div');
+            row.className = 'chore-edit-row';
+            row.innerHTML = `
+                <span style="font-size:1.3rem; width:32px; text-align:center;">✨</span>
+                <input type="text" value="新家务" data-idx="${idx}" class="chore-name-input" placeholder="名称" style="flex:2;">
+                <input type="text" value="✨" data-idx="${idx}" class="chore-icon-input" placeholder="图标" style="width:44px; flex:0 0 44px;">
+                <input type="number" value="1" data-idx="${idx}" class="chore-pts-done-input" placeholder="完成分" step="1" style="width:48px; flex:0 0 48px; text-align:center;">
+                <input type="number" value="-2" data-idx="${idx}" class="chore-pts-fail-input" placeholder="扣分" step="1" style="width:48px; flex:0 0 48px; text-align:center;">
+                <button class="chore-del-btn" data-idx="${idx}">✕</button>`;
+            list.appendChild(row);
+            row.querySelector('.chore-del-btn').onclick = () => row.remove();
+        };
+
+        modal.querySelectorAll('.chore-del-btn').forEach(b => {
+            b.onclick = () => b.closest('.chore-edit-row').remove();
+        });
+
+        document.getElementById('saveChoresBtn').onclick = () => {
+            let nameInputs = modal.querySelectorAll('.chore-name-input');
+            let iconInputs = modal.querySelectorAll('.chore-icon-input');
+            let ptsDoneInputs = modal.querySelectorAll('.chore-pts-done-input');
+            let ptsFailInputs = modal.querySelectorAll('.chore-pts-fail-input');
+            let newChores = [];
+            for (let i = 0; i < nameInputs.length; i++) {
+                let name = nameInputs[i].value.trim();
+                let icon = iconInputs[i].value.trim();
+                let ptsDone = parseInt(ptsDoneInputs[i].value) || 1;
+                let ptsFail = parseInt(ptsFailInputs[i].value) || -2;
+                if (name && icon) {
+                    newChores.push({ name, icon: icon.slice(0, 2), pointsComplete: ptsDone, pointsFail: ptsFail });
+                }
+            }
+            if (newChores.length === 0) {
+                alert("至少保留一项家务");
+                return;
+            }
+            CHORES = newChores;
+            saveCustomChores();
+            // 对齐所有孩子的数据
+            alignAllChildrenChoreLength();
+            // 刷新当前孩子的 UI
+            restoreChildData(childStorage[currentChildId]);
+            saveAllData();
+            refreshAllUI();
+            close();
+            alert("✅ 家务列表已更新！两个孩子共享同一份家务清单。");
+        };
+    }
+
+    // ════════════════ 奖池管理器 ════════════════
+    async function openPoolManager() {
+        await new Promise(resolve => requireVerification(resolve));
+
+        let modal = document.createElement('div');
+        modal.className = 'modal-mask';
+
+        function makePoolRows(tier) {
+            let pool = customPools[tier];
+            return pool.map((p, i) => `
+                <div class="pool-edit-row">
+                    <span style="min-width:20px;">${i + 1}.</span>
+                    <input type="text" value="${escapeHtml(p.name)}" data-tier="${tier}" data-idx="${i}" class="pool-name-input" placeholder="名称">
+                    <select data-tier="${tier}" data-idx="${i}" class="pool-type-select" style="padding:6px; border-radius:20px; border:1px solid #e2e8f0; font-size:0.75rem;">
+                        <option value="none" ${p.type === 'none' ? 'selected' : ''}>空奖</option>
+                        <option value="points" ${p.type === 'points' ? 'selected' : ''}>积分</option>
+                        <option value="time" ${p.type === 'time' ? 'selected' : ''}>时间</option>
+                        <option value="redeemDiscount" ${p.type === 'redeemDiscount' ? 'selected' : ''}>抵扣</option>
+                        <option value="cashVoucher" ${p.type === 'cashVoucher' ? 'selected' : ''}>现金券</option>
+                        <option value="onlineVoucher" ${p.type === 'onlineVoucher' ? 'selected' : ''}>网购券</option>
+                    </select>
+                    <input type="number" value="${p.value || 0}" data-tier="${tier}" data-idx="${i}" class="pool-value-input" placeholder="值" min="0" style="width:45px; flex:0 0 45px;">
+                    <input type="number" value="${p.weight || 1}" data-tier="${tier}" data-idx="${i}" class="pool-weight-input" placeholder="权重" min="1" style="width:45px; flex:0 0 45px;">
+                    <button class="chore-del-btn" data-tier="${tier}" data-idx="${i}">✕</button>
+                </div>`).join('');
+        }
+
+        modal.innerHTML = `<div class="modal-card">
+            <h3>🎛️ 管理奖池</h3>
+            <p style="font-size:0.7rem; color:#6b7280; margin:4px 0;">奖池两个孩子共享</p>
+            <div style="margin: 12px 0;">
+                <h4 style="color:#f59e0b;">🎟️ 5积分奖池</h4>
+                <div id="poolEdit5">${makePoolRows(5)}</div>
+                <button class="modal-btn" style="background:#10b981; font-size:0.7rem; padding:4px 12px;" data-addtier="5">+ 添加</button>
+            </div>
+            <div style="margin: 12px 0;">
+                <h4 style="color:#f59e0b;">🌈 10积分奖池</h4>
+                <div id="poolEdit10">${makePoolRows(10)}</div>
+                <button class="modal-btn" style="background:#10b981; font-size:0.7rem; padding:4px 12px;" data-addtier="10">+ 添加</button>
+            </div>
+            <div style="margin: 12px 0;">
+                <h4 style="color:#f59e0b;">🏆 20积分奖池</h4>
+                <div id="poolEdit20">${makePoolRows(20)}</div>
+                <button class="modal-btn" style="background:#10b981; font-size:0.7rem; padding:4px 12px;" data-addtier="20">+ 添加</button>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:12px;">
+                <button id="savePoolsBtn" class="modal-btn">💾 保存</button>
+                <button class="modal-btn modal-btn-cancel" id="closePoolManager">取消</button>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+
+        function close() { modal.remove(); }
+        document.getElementById('closePoolManager').onclick = close;
+
+        // 绑定删除按钮
+        modal.querySelectorAll('.chore-del-btn').forEach(b => {
+            b.onclick = () => b.closest('.pool-edit-row').remove();
+        });
+
+        // 添加按钮
+        modal.querySelectorAll('[data-addtier]').forEach(btn => {
+            btn.onclick = () => {
+                let tier = parseInt(btn.dataset.addtier);
+                let container = document.getElementById('poolEdit' + tier);
+                let idx = container.querySelectorAll('.pool-edit-row').length;
+                let row = document.createElement('div');
+                row.className = 'pool-edit-row';
+                row.innerHTML = `
+                    <span style="min-width:20px;">${idx + 1}.</span>
+                    <input type="text" value="新奖品" data-tier="${tier}" data-idx="${idx}" class="pool-name-input" placeholder="名称">
+                    <select data-tier="${tier}" data-idx="${idx}" class="pool-type-select" style="padding:6px; border-radius:20px; border:1px solid #e2e8f0; font-size:0.75rem;">
+                        <option value="none">空奖</option>
+                        <option value="points" selected>积分</option>
+                        <option value="time">时间</option>
+                        <option value="redeemDiscount">抵扣</option>
+                        <option value="cashVoucher">现金券</option>
+                        <option value="onlineVoucher">网购券</option>
+                    </select>
+                    <input type="number" value="1" data-tier="${tier}" data-idx="${idx}" class="pool-value-input" placeholder="值" min="0" style="width:45px; flex:0 0 45px;">
+                    <input type="number" value="1" data-tier="${tier}" data-idx="${idx}" class="pool-weight-input" placeholder="权重" min="1" style="width:45px; flex:0 0 45px;">
+                    <button class="chore-del-btn" data-tier="${tier}" data-idx="${idx}">✕</button>`;
+                container.appendChild(row);
+                row.querySelector('.chore-del-btn').onclick = () => row.remove();
+            };
+        });
+
+        document.getElementById('savePoolsBtn').onclick = () => {
+            for (let tier of [5, 10, 20]) {
+                let container = document.getElementById('poolEdit' + tier);
+                let rows = container.querySelectorAll('.pool-edit-row');
+                let newPool = [];
+                rows.forEach(row => {
+                    let name = row.querySelector('.pool-name-input').value.trim();
+                    let type = row.querySelector('.pool-type-select').value;
+                    let value = parseInt(row.querySelector('.pool-value-input').value) || 0;
+                    let weight = parseInt(row.querySelector('.pool-weight-input').value) || 1;
+                    if (name) {
+                        let item = { name, type, value, weight };
+                        if (type === 'time') {
+                            // 从名称推断子类型
+                            item.subType = name.includes('手机') ? 'phoneTime' : 'choreTime';
+                        }
+                        newPool.push(item);
+                    }
+                });
+                if (newPool.length === 0) {
+                    alert(`${tier}积分奖池至少需要一个奖品`);
+                    return;
+                }
+                customPools[tier] = newPool;
+            }
+            saveCustomPools();
+            rebuildSegmentsFromPool(customPools[5]);
+            refreshAllUI();
+            close();
+            alert("✅ 奖池已更新！两个孩子共享同一套奖池。");
+        };
+    }
+
+    // ════════════════ 选项卡 ════════════════
+    function initTabs() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panes = {
+            chores: document.getElementById('tab-chores'),
+            lottery: document.getElementById('tab-lottery'),
+            rewards: document.getElementById('tab-rewards')
+        };
+
+        function switchTab(tabId) {
+            if (animating && tabId !== 'lottery') {
+                // 允许离开 lottery，但提醒
+            }
+            if (animating && tabId === 'chores') {
+                alert("抽奖动画中请稍后");
+                return;
+            }
+            Object.keys(panes).forEach(id => panes[id].classList.remove('active-pane'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            panes[tabId].classList.add('active-pane');
+            document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+            if (tabId === 'lottery') { setupCanvas(); drawWheel(prizeSegments, wheelAngle); }
+            if (tabId === 'rewards') { renderBackpack(); renderExchange(computeAvailablePoints()); }
+        }
+
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                let tab = btn.dataset.tab;
+                switchTab(tab);
+            });
+        });
+    }
+
+    // ════════════════ 初始化 ════════════════
+    async function init() {
+        canvas = document.getElementById("wheelCanvas");
+        ctx = canvas.getContext("2d");
+
+        await loadPasswords();
+        loadAllData();
+        loadCustomPools();
+        loadCustomChores();
+        initWeekDates();
+
+        // 对齐所有孩子的 chore 长度
+        alignAllChildrenChoreLength();
+        restoreChildData(childStorage[currentChildId]);
+        saveAllData();
+
+        document.getElementById("prevWeekBtn").onclick = switchToPrevWeek;
+        document.getElementById("nextWeekBtn").onclick = switchToNextWeek;
+        document.getElementById("newWeekBtn").onclick = createNewWeek;
+        document.getElementById("setWeekDateBtn").onclick = setWeekDate;
+        document.getElementById("resetTodayBtn").onclick = resetCurrentDay;
+        document.getElementById("resetAllBtn").onclick = () => { resetAllGlobalData(); };
+        document.getElementById("editChoresBtn").onclick = openChoreEditor;
+        document.getElementById("managePoolBtn").onclick = openPoolManager;
+
+        document.querySelectorAll('.lottery-btn-tier').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let cost = parseInt(btn.dataset.cost);
+                if (!isNaN(cost)) startTierSpin(cost);
+            });
+        });
+
+        setupCanvas();
+        rebuildSegmentsFromPool(customPools[5]);
+        drawWheel(prizeSegments, wheelAngle);
+
+        updateHeroTitle();
+        renderChildSelector();
+        refreshAllUI();
+        initTabs();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>
+</body>
+</html>
