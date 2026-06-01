@@ -1,0 +1,37 @@
+{
+  "name": "housework-scoreboard",
+  "displayName": "家务积分表",
+  "version": "1.0.0",
+  "description": "杨煜瑾 & 杨舒涵 家务积分管理系统",
+  "main": "www/index.html",
+  "scripts": {
+    "build": "cordova build android",
+    "build-release": "cordova build android --release",
+    "clean": "cordova clean",
+    "emulate": "cordova emulate android"
+  },
+  "devDependencies": {
+    "cordova-android": "^13.0.0",
+    "cordova-plugin-statusbar": "^4.0.0"
+  },
+  "cordova": {
+    "platforms": [
+      "android"
+    ],
+    "plugins": {
+      "cordova-plugin-statusbar": {}
+    }
+  },
+  "keywords": [
+    "housework",
+    "chores",
+    "scoreboard",
+    "family"
+  ],
+  "author": "家长",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "adm-zip": "^0.5.17"
+  }
+}
